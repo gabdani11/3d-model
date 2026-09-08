@@ -1,0 +1,16 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.experience {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  offset: 0;
+  overflow: hidden;
+}
+#experience-canvas {
+  width: 100%;
+  height: 100%;
+}
