@@ -4,10 +4,15 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const scene = new THREE.Scene(); //create a new scene
 const canvas = document.getElementById("experience-canvas"); //get the canvas element from the HTML document
+const raycaster = new THREE.Raycaster(); //create a new raycaster to detect mouse interactions with 3D objects
+const pointer = new THREE.Vector2(); //create a new vector to store the mouse position in normalized device coordinates
 const sizes = {
   width: window.innerWidth, //set the width to the window's inner width
   height: window.innerHeight, //set the height to the window's inner height
 };
+let intersectObject = ""; //create a variable to store the name of the intersected object
+const intersectedObjects = []; //create an array to store the intersected objects
+const intersectedObjectsName = ["project1", "project2"];
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true }); //create a new WebGL renderer
 renderer.setSize(sizes.width, sizes.height); //set the size of the renderer to match the window size
@@ -23,12 +28,16 @@ loader.load(
   "./portfolio.glb",
   function (glb) {
     glb.scene.traverse((child) => {
+      if (intersectedObjectsName.includes(child.name)) {
+        intersectedObjects.push(child);
+      }
       if (child.isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
       }
     });
     scene.add(glb.scene);
+    console.log(glb.scene);
   },
   undefined,
   function (error) {
@@ -85,10 +94,29 @@ function onWindowResize() {
   renderer.setSize(sizes.width, sizes.height); //update the renderer's size
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); //update the renderer's pixel ratio
 }
-
+function onPointerMove(event) {
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+}
+function intersectObjectClick() {
+  console.log(intersectObject);
+}
+window.addEventListener("pointermove", onPointerMove); //add an event listener to the pointer move event
 window.addEventListener("resize", onWindowResize); //add an event listener to the window resize event
+window.addEventListener("click", intersectObjectClick); //add an event listener to the click event
 
 function animate(time) {
+  raycaster.setFromCamera(pointer, camera); //update the raycaster with the current mouse position and camera
+  const intersects = raycaster.intersectObjects(intersectedObjects); //get the list of intersected objects
+  if (intersects.length > 0) {
+    document.body.style.cursor = "pointer"; //change the cursor to a pointer if an object is intersected
+  } else {
+    document.body.style.cursor = "default"; //change the cursor back to default if no object is intersected
+    intersectObject = ""; //reset the intersected object name if no object is intersected
+  }
+  for (let i = 0; i < intersects.length; i++) {
+    intersectObject = intersects[0].object.parent.name; //store the name of the intersected object
+  }
   renderer.render(scene, camera);
 }
 renderer.setAnimationLoop(animate); //set the animation loop to call the animate function on each frame
