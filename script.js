@@ -8,8 +8,37 @@ const raycaster = new THREE.Raycaster(); //create a new raycaster to detect mous
 const pointer = new THREE.Vector2(); //create a new vector to store the mouse position in normalized device coordinates
 const sizes = {
   width: window.innerWidth, //set the width to the window's inner width
+
   height: window.innerHeight, //set the height to the window's inner height
 };
+
+let modalContent = {
+  project1: {
+    title: "Project 1",
+    description: "This is the description for Project 1.",
+  },
+  project2: {
+    title: "Project 2",
+    description: "This is the description for Project 2.",
+  },
+};
+let modal = document.querySelector(".model");
+let modalTitle = document.querySelector(".model-title-wrapper");
+let modalDescription = document.querySelector(".model-content-wrapper");
+let modalCloseBtn = document.querySelector(".model-close-button");
+
+function showModal(id) {
+  const project = modalContent[id];
+  if (project) {
+    modalTitle.textContent = project.title;
+    modalDescription.textContent = project.description;
+    modal.classList.toggle("hidden");
+  }
+}
+function hideModal() {
+  modal.classList.toggle("hidden");
+}
+modalCloseBtn.addEventListener("click", hideModal);
 let intersectObject = ""; //create a variable to store the name of the intersected object
 const intersectedObjects = []; //create an array to store the intersected objects
 const intersectedObjectsName = ["project1", "project2"];
@@ -75,9 +104,10 @@ const camera = new THREE.OrthographicCamera(
   1000,
 );
 
-camera.position.x = -95; //setting the camera position
-camera.position.y = 81; //setting the camera position
-camera.position.z = -165; //setting the camera position
+camera.position.x = -120; //setting the camera position
+camera.position.y = 103; //setting the camera position
+camera.position.z = -239; //setting the camera position
+
 const controls = new OrbitControls(camera, canvas);
 controls.update();
 
@@ -100,6 +130,9 @@ function onPointerMove(event) {
 }
 function intersectObjectClick() {
   console.log(intersectObject);
+  if (intersectObject) {
+    showModal(intersectObject);
+  }
 }
 window.addEventListener("pointermove", onPointerMove); //add an event listener to the pointer move event
 window.addEventListener("resize", onWindowResize); //add an event listener to the window resize event
@@ -118,5 +151,6 @@ function animate(time) {
     intersectObject = intersects[0].object.parent.name; //store the name of the intersected object
   }
   renderer.render(scene, camera);
+  console.log(camera.position);
 }
 renderer.setAnimationLoop(animate); //set the animation loop to call the animate function on each frame
