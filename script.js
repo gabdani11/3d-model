@@ -12,6 +12,13 @@ const sizes = {
   height: window.innerHeight, //set the height to the window's inner height
 };
 
+let character = {
+  instance: null,
+  moveDistance: 5,
+  jumpHeight: 1,
+  isMoving: false,
+  moveDuration: 0.1,
+};
 let modalContent = {
   project1: {
     title: "Project 1",
@@ -63,6 +70,10 @@ loader.load(
       if (child.isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+      }
+
+      if (child.name === "character") {
+        character.instance = child;
       }
     });
     scene.add(glb.scene);
@@ -134,9 +145,69 @@ function intersectObjectClick() {
     showModal(intersectObject);
   }
 }
+function moveCharacter(targetPosition, targetRotation) {
+  character.isMoving = true; // Set the character's moving state to true
+  const t1 = gsap.timeline({
+    onComplete: () => {
+      character.isMoving = false; // Reset the character's moving state when the animation is complete
+    },
+  });
+  t1.to(character.instance.position, {
+    x: targetPosition.x,
+    z: targetPosition.z,
+    duration: character.moveDuration,
+  });
+  t1.to(
+    character.instance.rotation,
+    {
+      y: targetRotation,
+      duration: character.moveDuration,
+    },
+    0,
+  );
+  t1.to(
+    character.instance.position,
+    {
+      y: character.instance.position.y + character.jumpHeight,
+      duration: character.moveDuration / 2,
+      yoyo: true, // Enable yoyo effect to return to the original position
+      repeat: 1, // Repeat the jump once
+    },
+    0,
+  );
+}
+function onKeyDown(event) {
+  if (character.isMoving) return; // Prevent new movement if already moving
+  const targetPosition = new THREE.Vector3().copy(character.instance.position); // Create a new vector for the target position
+  let targetRotation = 0; // Store the target rotation
+  switch (event.key.toLowerCase()) {
+    case "w":
+    case "arrowup":
+      targetPosition.z += character.moveDistance;
+      targetRotation = Math.PI / 2; // Rotate to face forward
+      break;
+    case "s":
+    case "arrowdown":
+      targetPosition.z -= character.moveDistance;
+      targetRotation = -Math.PI / 2; // Rotate to face backward
+      break;
+    case "a":
+    case "arrowleft":
+      targetPosition.x += character.moveDistance;
+      targetRotation = Math.PI; // Rotate to face left
+      break;
+    case "d":
+    case "arrowright":
+      targetPosition.x -= character.moveDistance;
+      targetRotation = 0; // Rotate to face right
+      break;
+  }
+  moveCharacter(targetPosition, targetRotation); // Call the moveCharacter function with the target position and rotation
+}
 window.addEventListener("pointermove", onPointerMove); //add an event listener to the pointer move event
 window.addEventListener("resize", onWindowResize); //add an event listener to the window resize event
 window.addEventListener("click", intersectObjectClick); //add an event listener to the click event
+window.addEventListener("keydown", onKeyDown);
 
 function animate(time) {
   raycaster.setFromCamera(pointer, camera); //update the raycaster with the current mouse position and camera
@@ -151,6 +222,5 @@ function animate(time) {
     intersectObject = intersects[0].object.parent.name; //store the name of the intersected object
   }
   renderer.render(scene, camera);
-  console.log(camera.position);
 }
 renderer.setAnimationLoop(animate); //set the animation loop to call the animate function on each frame
